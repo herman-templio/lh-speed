@@ -1,3 +1,4 @@
+require('dotenv').config()
 const lighthouse = require('lighthouse');
 const chromeLauncher = require('chrome-launcher');
 const fs=require('fs')
@@ -9,11 +10,13 @@ async function launchChromeAndRunLighthouse(url, flags = {}, options={}, config 
     // `.report` is the HTML report as a string
     const reportHtml = results.report;
     //console.log(reportHtml);
-    fs.writeFileSync(options.output_path||'report.html', reportHtml);
+    const output=options.output_path||'report.html'
+    console.log('Saving report to',output);
+    fs.writeFileSync(output, reportHtml);
 }
 
 const flags = {
-    //chromeFlags: ['--headless']
+    chromeFlags: ['--headless']
 };
 const options = {
     logLevel: 'info', output: 'html', onlyCategories: ['performance'],
@@ -27,4 +30,7 @@ if(process.argv.length<3) {
 if(process.argv.length>3) {
     options.output_path=process.argv[3]
 }
-launchChromeAndRunLighthouse(process.argv[2], flags, options)
+let config=require('./config')
+config=require('lighthouse/lighthouse-core/config/lr-mobile-config')
+//config=require('lighthouse/lighthouse-core/config/lr-desktop-config')
+launchChromeAndRunLighthouse(process.argv[2], flags, options, config)

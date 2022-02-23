@@ -21,11 +21,11 @@ export const extended = {
     },
 };
 
-import * as mobile from 'lighthouse/lighthouse-core/config/lr-mobile-config.js'
-import * as desktop from 'lighthouse/lighthouse-core/config/lr-desktop-config.js'
+import mobile from 'lighthouse/lighthouse-core/config/lr-mobile-config.js'
+import desktop from 'lighthouse/lighthouse-core/config/lr-desktop-config.js'
 
-export const configs=[
+export const configs={
     extended,
     mobile,
     desktop
-]
+}

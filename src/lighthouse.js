@@ -23,7 +23,7 @@ export class LighouseRunner {
             debug('mock test')
             return setTimeout(()=>this.testCompleted(id,{}),200)
         }
-        const config=configs[data.config]
+        const config=configs[data.config||'mobile']
         const options=Object.assign(default_options(),data.options)
         
         if(!options.port) {

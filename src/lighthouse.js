@@ -1,8 +1,10 @@
 import lighthouse from 'lighthouse'
 import * as dbg from 'debug'
+import _ from 'lodash'
 const debug=dbg.default('app')
 import fs from 'fs'
 import { configs } from './configs.js'
+import { P } from './utils.js'
 const EXPIRY_TIME_S=10*60
 const MAX_LISTEN_S=30
 const MAX_COUNT=1000
@@ -31,7 +33,7 @@ export class LighouseRunner {
                 throw new Error("Missing option: port")
             }
             console.log(url,options,config);
-            let results= {report:'{"hello":"world"}'}
+            let results= {report:'{"hello":{"lighthouse":"world","other":"world"}}'}
             if(!data.mock) {
                 results = await lighthouse(url, options, config)
             }
@@ -48,14 +50,25 @@ export class LighouseRunner {
     }
     projection(report,select=[]) {
         const res={}
-        select.forEach(s=>res[s]=report[s])
+        select.forEach(s=>{
+            const v = _.get(report,s)
+            _.set(res,s,v)
+        })
         return res
     }
 
     async project(file,select=[]) {
         if(!file) return {}
-        let report = await import('../'+file, { assert: { type: "json" } })
-        return this.projection(report.default,select)
+        let report
+        if(file.endsWith('.json')) {
+            report = await import('../'+file, { assert: { type: "json" } })
+            report = report.default
+        } else {
+            let text=await P(cb=>fs.readFile(file,cb))
+            report = JSON.parse(text)
+        }
+        debug(select)
+        return this.projection(report,select)
     }
     queue=[]
     listeners={}
@@ -77,7 +90,7 @@ export class LighouseRunner {
 
     addListener(id,f) {
         if(this.results[id] || !this.findTestById(id)) {
-            debug('Invoking listener immediately',id)
+            debug('Invoking listener immediately',id, 'because', this.results[id]? 'results alread added':'no such test found')
             return f({state:'complete',res:this.results[id]?.res})
         }
         debug('Adding listener',id)
@@ -193,7 +206,7 @@ export let routes=[{
     },
 },{
     method:'get',path:'/observe/:id',f:async (ctx) => {
-        const id=parseInt(ctx.params.id)
+        const id=ctx.params.id
         try {
             ctx.body = await runner.waitForUpdate(id)
         } catch(e) {
@@ -202,7 +215,7 @@ export let routes=[{
     }
 },{
     method:'get',path:'/result/:id',f:async (ctx) => {
-        const id=parseInt(ctx.params.id)
+        const id=ctx.params.id
         try {
             ctx.body = await runner.waitForComplete(id)
         } catch(e) {

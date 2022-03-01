@@ -23,27 +23,27 @@ export class LighouseRunner {
             debug('mock test')
             return setTimeout(()=>this.testCompleted(id,{}),200)
         }
-        const config=configs[data.config||'mobile']
-        const options=Object.assign(default_options(),data.options)
-        
-        if(!options.port) {
-            throw new Error("Missing option: port")
-        }
-        console.log(url,options,config);
-        let results= {report:'{"hello":"world"}'}
-        if(!data.mock) {
-            results = await lighthouse(url, options, config)
-        }
-        // `.report` is the JSON/HTML report as a string
-        const report = results.report;
-        const output=options.output_path||'reports/report.'+options.output
         try {
+            const config=configs[data.config||'mobile']
+            const options=Object.assign(default_options(),data.options||{})
+            
+            if(!options.port) {
+                throw new Error("Missing option: port")
+            }
+            console.log(url,options,config);
+            let results= {report:'{"hello":"world"}'}
+            if(!data.mock) {
+                results = await lighthouse(url, options, config)
+            }
+            // `.report` is the JSON/HTML report as a string
+            const report = results.report;
+            const output=options.output_path||'reports/report.'+options.output
             console.log('Saving report to',output);
             fs.writeFileSync(output, report);
             console.log('Saved report to',output);
             this.testCompleted(id,{output:output,report: this.projection(JSON.parse(report),data.select)})
         } catch(e) {
-            console.log(e);
+            this.testCompleted(id,{error:e.message})
         }
     }
     projection(report,select=[]) {
@@ -84,6 +84,14 @@ export class LighouseRunner {
         this.listeners[id]=f
     }
 
+    getQueuePosition(id) {
+        return this.queue.findIndex(test => test.id==id)
+    }
+
+    getResults(id) {
+        return this.results[id]
+    }
+
     findTestById(id) {
         return this.queue.find(test => test.id==id)
     }
@@ -95,7 +103,7 @@ export class LighouseRunner {
     }
 
     enqueue_test(data) {
-        const id=this.getID()
+        const id=data.id || this.getID()
         debug(this.queue[0])
         this.queue.push({id:id,data:data})
         let res= {id,position:this.queue.length-1}
@@ -161,6 +169,13 @@ export class LighouseRunner {
 export const runner=new LighouseRunner()
 
 export function runTest(ctx,body) {
+    if(body.id) {
+        // Check if test is already queued/running/complete
+        const position=runner.getQueuePosition(body.id)
+        if(position>=0) return {state:position?'queued':'running',id:body.id,position:position}
+        const results=runner.getResults(body.id)
+        if(results) return {state:'completed',res:results}
+    }
     const {id,position} = runner.enqueue_test(body)
     ctx.body = {state:position?'queued':'running',id:id,position:position}
 }

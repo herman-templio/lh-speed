@@ -1,6 +1,5 @@
 import {expect} from 'chai'
 import env from 'dotenv'
-import * as path from 'path'
 import {runTest,runner} from '../src/lighthouse.js'
 
 env.config();

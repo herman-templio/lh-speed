@@ -33,9 +33,14 @@ export class LighouseRunner {
                 throw new Error("Missing option: port")
             }
             console.log(url,options,config);
-            let results= {report:'{"hello":{"lighthouse":"world","other":"world"}}'}
+            let results= {report:'{"hello":{"lighthouse":"world","other":"world"},"finalUrl":"someMockUrl"}'}
             if(!data.mock) {
                 results = await lighthouse(url, options, config)
+            } else {
+                let mock=data.mock
+                console.log('Sending mock result after',mock,'ms');
+                try { mock=parseInt(data.mock)}catch(e){}
+                await P(cb=>setTimeout(()=>cb(),mock))
             }
             // `.report` is the JSON/HTML report as a string
             const report = results.report;
@@ -157,7 +162,7 @@ export class LighouseRunner {
     async waitForUpdate(id,timeout=MAX_LISTEN_S) {
         return new Promise((resolve) => {
             const t = setTimeout(()=>{
-                reject('timoeut')
+                reject('timeout')
             },timeout*1000)
             this.addListener(id,(res)=>{
                 clearTimeout(t)
@@ -167,7 +172,7 @@ export class LighouseRunner {
     }
 
     async waitForComplete(id,timeout=MAX_LISTEN_S) {
-        debug('Waitoing for',id)
+        debug('Waiting for',id)
         let res= await this.waitForUpdate(id,timeout)
         debug('Result',id,res)
         while (['running','queued'].includes(res?.state)) {

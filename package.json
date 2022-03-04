@@ -13,7 +13,7 @@
   "scripts": {
     "lint": "eslint src/**",
     "start": "NODE_ENV=production node src/app.js",
-    "dev": "NODE_ENV=local nodemon --exec node src/app.js",
+    "dev": "NODE_ENV=local nodemon --ignore reports/ --ignore test/ --exec node src/app.js",
     "test-cov": "nyc mocha",
     "test": "mocha",
     "watch": "nodemon --exec ./node_modules/.bin/mocha",

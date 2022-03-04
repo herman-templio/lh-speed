@@ -9,6 +9,8 @@ import Koa from 'koa';
 import requestBodyParser from 'koa-bodyparser';
 import jsonError from 'koa-json-error';
 import Router from 'koa-router';
+import cors from '@koa/cors'
+
 //import env from 'dotenv'
 //env.config();
 //import * as dataRoutes from './routes.js'
@@ -20,6 +22,7 @@ function get_app() {
     //import { publicRoutes, jwtRoutes, protectedRoutes } from './routes/index';
 
     let app = new Koa();
+    app.use(cors())
 
     // all routes
     const router = new Router();

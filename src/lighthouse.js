@@ -160,7 +160,7 @@ export class LighouseRunner {
      * Can also be rejected with 'timeout' as error
      */
     async waitForUpdate(id,timeout=MAX_LISTEN_S) {
-        return new Promise((resolve) => {
+        return new Promise((resolve,reject) => {
             const t = setTimeout(()=>{
                 reject('timeout')
             },timeout*1000)
